@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block content %}
+    {% if errorMessage %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong class="font-bold">Error!</strong>
+            <span class="block sm:inline">{{ errorMessage }}</span>
+        </div>
+    {% endif %}
+
+    {% if character %}
+        <div class="container mx-auto p-4">
+            <div class="flex">
+                <div class="mr-6 flex items-center">
+                    <img src="{{ character.image }}" alt="{{ character.name }}" width="200" height="200">
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold mb-4">{{ character.name }}</h1>
+                    <p><strong>Status:</strong> {{ character.status }}</p>
+                    <p><strong>Species:</strong> {{ character.species }}</p>
+                    {% if character.type is defined %}
+                        <p><strong>Type:</strong> {{ character.type }}</p>
+                    {% endif %}
+                    <p><strong>Gender:</strong> {{ character.gender }}</p>
+                    <p><strong>Origin:</strong> {{ character.origin.name }}</p>
+                    <p><strong>Last Location:</strong> {{ character.location.name }}</p>
+                    {% if character.dimension is defined %}
+                        <p><strong>Last Dimension:</strong> {{ character.dimension }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="text-center mt-12">
+                <a href="{{ referer }}" class="text-blue-500 hover:underline mt-4">&lt; Go Back</a>
+            </div>
+        </div>
+    {% endif %}
+
+{% endblock %}
