@@ -34,8 +34,12 @@ class ApiService implements ApiServiceInterface
     {
         $this->serializer = new Serializer([new ArrayDenormalizer(), new ObjectNormalizer()]);
 
-        $store = new Store(self::CACHE_PATH);
-        $this->httpClient = new CachingHttpClient($this->httpClient, $store, ['default_ttl' => self::CACHE_TTL]);
+        // TODO: CachingHttpClient defeats concurrency https://github.com/symfony/symfony/issues/36967
+        // so, if we use the CachingHttpClient, the requests will be sequential.
+        // consider a "manual" approach, eg https://developer.happyr.com/http-client-and-caching
+
+        /*$store = new Store(self::CACHE_PATH);
+        $this->httpClient = new CachingHttpClient($this->httpClient, $store, ['default_ttl' => self::CACHE_TTL]);*/
     }
 
     public function getCharacterById(int $id): ?CharacterDTO
@@ -69,36 +73,39 @@ class ApiService implements ApiServiceInterface
         $allData = [];
 
         try {
-            do {
-                $response = $this->httpClient->request('GET', $apiUrl);
+            $response = $this->httpClient->request('GET', $apiUrl);
 
-                if ($response->getStatusCode() === Response::HTTP_OK) {
-                    $data = $response->toArray();
+            if ($response->getStatusCode() !== Response::HTTP_OK) {
+                if ($response->getStatusCode() !== Response::HTTP_NOT_FOUND) {
+                    throw new ApiException('API request failed with status code: ' . $response->getStatusCode());
+                }
+                return [];
+            }
 
-                    if (!isset($data['results'])) {
-                        // No pagination
-                        return $data;
-                    }
+            $data = $response->toArray();
+            if (!isset($data['results'])) {
+                // No pagination
+                return $data;
+            }
 
-                    $allData = array_merge($allData, $data['results']);
+            // Fetch the additional pages in parallel
+            $allData = $data['results'];
+            if (!empty($data['info']['pages'])) {
+                $totalPages = $data['info']['pages'];
+                $responses = [];
 
-                    // If there are more pages, fetch them
-                    $nextPageLink = $data['info']['next'] ?? null;
-                    if ($nextPageLink) {
-                        // Update the API URL to fetch the next page
-                        $apiUrl = $nextPageLink;
-                    } else {
-                        break;
-                    }
-                } else {
-                    if ($response->getStatusCode() !== Response::HTTP_NOT_FOUND) {
-                        throw new ApiException('API request failed with status code: ' . $response->getStatusCode());
-                    }
-                    if ($response->getStatusCode() === Response::HTTP_NOT_FOUND) {
-                        return [];
+                for ($i = 2; $i <= $totalPages; $i++) {
+                    $uri = $apiUrl . (str_contains($apiUrl, '?') ? '&' : '?') . 'page=' . $i;
+                    $responses[] = $this->httpClient->request('GET', $uri);
+                }
+
+                foreach ($responses as $response) {
+                    if ($response->getStatusCode() === Response::HTTP_OK) {
+                        $data = $response->toArray();
+                        $allData = array_merge($allData, $data['results']);
                     }
                 }
-            } while ($response->getStatusCode() === Response::HTTP_OK);
+            }
         } catch (Exception $e) {
             throw new ApiException('Error fetching data from API: ' . $e->getMessage(), $e->getCode(), $e);
         }
