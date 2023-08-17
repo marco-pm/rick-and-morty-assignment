@@ -94,6 +94,9 @@ class ApiService implements ApiServiceInterface
                     if ($response->getStatusCode() !== Response::HTTP_NOT_FOUND) {
                         throw new ApiException('API request failed with status code: ' . $response->getStatusCode());
                     }
+                    if ($response->getStatusCode() === Response::HTTP_NOT_FOUND) {
+                        return [];
+                    }
                 }
             } while ($response->getStatusCode() === Response::HTTP_OK);
         } catch (Exception $e) {
