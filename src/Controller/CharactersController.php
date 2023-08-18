@@ -26,7 +26,8 @@ class CharactersController extends AbstractController
         #[MapQueryParameter] string             $searchTerm,
         Request                                 $request,
         CharacterSearchCriteriaFactoryInterface $characterSearchCriteriaFactory,
-        PaginatorInterface                      $paginator
+        PaginatorInterface                      $paginator,
+        int                                     $charactersPerPage
     ): Response
     {
         $characters = [];
@@ -37,15 +38,14 @@ class CharactersController extends AbstractController
             try {
                 $characters = $searchCriteria->search($searchTerm);
             } catch (Exception $e) {
-                if ($this->getParameter('kernel.environment') === 'dev') {
+                // TODO
+                /*if ($this->getParameter('kernel.environment') === 'dev') {
                     $errorMessage = $e->getMessage();
                 } else {
                     $errorMessage = 'An error occurred. Please try again later.';
-                }
+                }*/
             }
         }
-
-        $charactersPerPage = $this->getParameter('characters_per_page');
 
         $paginatedCharacters = $paginator->paginate(
             $characters,
@@ -69,11 +69,11 @@ class CharactersController extends AbstractController
         try {
             $character = $apiService->getCharacterById($id);
         } catch (Exception $e) {
-            if ($this->getParameter('kernel.environment') === 'dev') {
+            /*if ($this->getParameter('kernel.environment') === 'dev') {
                 $errorMessage = $e->getMessage();
             } else {
                 $errorMessage = 'An error occurred. Please try again later.';
-            }
+            }*/
         }
 
         $referer = $request->headers->get('referer');
