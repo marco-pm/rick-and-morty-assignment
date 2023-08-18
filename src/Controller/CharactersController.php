@@ -31,7 +31,7 @@ class CharactersController extends AbstractController
      * @throws ClassNotFoundException
      */
     #[Route('/characters', name: 'characters', methods: ['GET'])]
-    public function index(
+    public function listCharacters(
         #[MapQueryParameter] string             $category,
         #[MapQueryParameter] string             $searchTerm,
         Request                                 $request,
@@ -71,7 +71,7 @@ class CharactersController extends AbstractController
     }
 
     #[Route('/character/{id<\d+>}', name: 'character', methods: 'GET')]
-    public function show(int $id, Request $request, ApiServiceInterface $apiService): Response
+    public function showCharacter(int $id, Request $request, ApiServiceInterface $apiService): Response
     {
         $errorMessage = null;
         $character = null;
