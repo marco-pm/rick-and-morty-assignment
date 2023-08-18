@@ -6,14 +6,16 @@ use App\DTO\CharacterDTO;
 use App\DTO\EpisodeDTO;
 use App\DTO\LocationDTO;
 use App\Exception\ApiException;
-use Exception;
-use Symfony\Component\HttpClient\CachingHttpClient;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\HttpCache\Store;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class ApiService implements ApiServiceInterface
@@ -42,6 +44,9 @@ class ApiService implements ApiServiceInterface
         $this->httpClient = new CachingHttpClient($this->httpClient, $store, ['default_ttl' => self::CACHE_TTL]);*/
     }
 
+    /**
+     * @throws ApiException
+     */
     public function getCharacterById(int $id): ?CharacterDTO
     {
         $apiUrl = $this->apiBaseUrl . $this->characterEndpoint . '/' . $id;
@@ -64,7 +69,7 @@ class ApiService implements ApiServiceInterface
 
     /**
      * Runs a GET request to the API and returns the response data.
-     * TODO: handle other status codes and exceptions
+     * TODO: consume the graphql API instead of the REST API
      *
      * @throws ApiException
      */
@@ -75,11 +80,13 @@ class ApiService implements ApiServiceInterface
         try {
             $response = $this->httpClient->request('GET', $apiUrl);
 
-            if ($response->getStatusCode() !== Response::HTTP_OK) {
-                if ($response->getStatusCode() !== Response::HTTP_NOT_FOUND) {
-                    throw new ApiException('API request failed with status code: ' . $response->getStatusCode());
+            // deal with error status codes
+            $statusCode = $response->getStatusCode(); // prevents HttpException from being thrown
+            if ($statusCode !== Response::HTTP_OK) {
+                if ($statusCode === Response::HTTP_NOT_FOUND) {
+                    return []; // Return empty array for 404
                 }
-                return [];
+                throw new ApiException('API request failed with status code: ' . $statusCode);
             }
 
             $data = $response->toArray();
@@ -100,13 +107,20 @@ class ApiService implements ApiServiceInterface
                 }
 
                 foreach ($responses as $response) {
-                    if ($response->getStatusCode() === Response::HTTP_OK) {
-                        $data = $response->toArray();
-                        $allData = array_merge($allData, $data['results']);
+                    // deal with error status codes
+                    $statusCode = $response->getStatusCode(); // prevents HttpException from being thrown
+                    if ($statusCode !== Response::HTTP_OK && $statusCode !== Response::HTTP_NOT_FOUND) {
+                        throw new ApiException('API request failed with status code: ' . $statusCode);
                     }
+
+                    $data = $response->toArray();
+                    $allData = array_merge($allData, $data['results']);
                 }
             }
-        } catch (Exception $e) {
+        } catch (
+        TransportExceptionInterface|DecodingExceptionInterface|ServerExceptionInterface|RedirectionExceptionInterface|ClientExceptionInterface
+        $e
+        ) {
             throw new ApiException('Error fetching data from API: ' . $e->getMessage(), $e->getCode(), $e);
         }
 

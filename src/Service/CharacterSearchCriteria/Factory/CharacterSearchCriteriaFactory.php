@@ -14,6 +14,9 @@ class CharacterSearchCriteriaFactory implements CharacterSearchCriteriaFactoryIn
     {
     }
 
+    /**
+     * @throws ClassNotFoundException
+     */
     public function create(string $searchCriteria): CharacterSearchCriteriaInterface
     {
         $searchCriteriaUc = str_replace(' ', '', ucwords(str_replace('-', ' ', $searchCriteria)));

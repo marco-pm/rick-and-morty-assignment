@@ -3,6 +3,7 @@
 namespace App\Service\CharacterSearchCriteria;
 
 use App\DTO\CharacterDTO;
+use App\Exception\ApiException;
 use App\Service\ApiServiceInterface;
 
 abstract class CharacterSearchCriteria implements CharacterSearchCriteriaInterface
@@ -15,6 +16,7 @@ abstract class CharacterSearchCriteria implements CharacterSearchCriteriaInterfa
 
     /**
      * @return CharacterDTO[]
+     * @throws ApiException
      */
     protected function getCharactersFromEndpoints(array $characterEndpoints): array
     {

@@ -4,11 +4,13 @@ namespace App\Service\CharacterSearchCriteria;
 
 use App\DTO\CharacterDTO;
 use App\DTO\LocationDTO;
+use App\Exception\ApiException;
 
 class CharacterLocationSearchCriteria extends CharacterSearchCriteria
 {
     /**
      * @return CharacterDTO[]
+     * @throws ApiException
      */
     public function search(string $searchTerm): array
     {
