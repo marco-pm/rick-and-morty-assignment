@@ -1,13 +1,13 @@
 <?php
 
-
 use App\DTO\CharacterDTO;
+use App\DTO\Factory\DtoFactory;
 use App\Service\ApiService;
-use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
-class ApiServiceTest extends TestCase
+class ApiServiceTest extends KernelTestCase
 {
     public function characterDataProvider(): array
     {
@@ -52,9 +52,13 @@ class ApiServiceTest extends TestCase
      */
     public function testGetCharacterById(array $characterData): void
     {
+        self::bootKernel();
+        $dtoFactory = static::getContainer()->get(DtoFactory::class);
+
         $response = new MockResponse(json_encode($characterData), ['http_code' => 200]);
         $httpClient = new MockHttpClient([$response]);
-        $apiService = new ApiService($httpClient, 'https://example.com/api/', 'characters', 'locations', 'episodes');
+
+        $apiService = new ApiService($httpClient, $dtoFactory, 'https://example.com/api/', 'characters', 'locations', 'episodes');
 
         $character = $apiService->getCharacterById($characterData['id']);
 
@@ -67,9 +71,12 @@ class ApiServiceTest extends TestCase
 
     public function testGetCharacterByIdWithInvalidId(): void
     {
+        self::bootKernel();
+        $dtoFactory = static::getContainer()->get(DtoFactory::class);
+
         $response = new MockResponse('', ['http_code' => 404]);
         $httpClient = new MockHttpClient([$response]);
-        $apiService = new ApiService($httpClient, 'https://example.com/api/', 'characters', 'locations', 'episodes');
+        $apiService = new ApiService($httpClient, $dtoFactory, 'https://example.com/api/', 'characters', 'locations', 'episodes');
 
         $character = $apiService->getCharacterById(1);
 
