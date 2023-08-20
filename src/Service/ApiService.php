@@ -6,6 +6,7 @@ use App\DTO\CharacterDTO;
 use App\DTO\EpisodeDTO;
 use App\DTO\LocationDTO;
 use App\Exception\ApiException;
+use App\Service\CharacterSearchCriteria\CharacterSearchCriteriaInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
@@ -32,29 +33,69 @@ class ApiService implements ApiServiceInterface
     /**
      * @throws ApiException
      */
-    public function getCharacterById(int $id): ?CharacterDTO
+    public function search(CharacterSearchCriteriaInterface $searchCriteria, string $searchTerm): array
     {
-        $apiUrl = $this->apiBaseUrl . $this->characterEndpoint . '/' . $id;
-        $data = $this->getResponseData($apiUrl);
+        $method = $searchCriteria->getCriteria($searchTerm);
 
-        if ($data) {
-            $character = $this->serializer->denormalize($data, CharacterDTO::class);
-
-            // Fetch last location and add dimension to the returned object
-            if (!empty($data['location']['url'])) {
-                $location = $this->getLocationByUrl($data['location']['url']);
-                $character->dimension = $location?->dimension;
-            }
-
-            return $character;
+        if (!method_exists($this, $method)) {
+            throw new ApiException('Invalid search criteria.');
         }
 
-        return null;
+        $results = $this->$method($searchTerm);
+
+        // Check if $results contains LocationDTO or EpisodeDTO instances
+        if ($results && ($results[0] instanceof LocationDTO || $results[0] instanceof EpisodeDTO)) {
+            $urlsKey = $results[0] instanceof LocationDTO ? 'residents' : 'characters';
+
+            $urls = array_reduce(
+                $results,
+                fn(array $carry, $dto) => array_merge($carry, $dto->$urlsKey),
+                []
+            );
+
+            return $this->getCharactersFromEndpoints($urls);
+        }
+
+        return $results;
     }
 
     /**
-     * Runs a GET request to the API and returns the response data.
-     * TODO: consume the graphql API instead of the REST API
+     * @return CharacterDTO[]
+     * @throws ApiException
+     */
+    protected function getCharactersFromEndpoints(array $characterEndpoints): array
+    {
+        $characterIds = array_map(fn($characterUrl) => $this->extractCharacterIdfromUrl($characterUrl), $characterEndpoints
+        );
+
+        return $this->getCharactersByIds($characterIds);
+    }
+
+    protected function extractCharacterIdfromUrl(string $characterUrl): int
+    {
+        $parts = explode('/', $characterUrl);
+        return (int)end($parts);
+    }
+
+    /**
+     * @return CharacterDTO[]
+     * @throws ApiException
+     */
+    public function getCharactersByIds(array $ids): array
+    {
+        if (empty($ids)) {
+            return [];
+        }
+
+        $characterIdsString = implode(',', $ids);
+        $apiUrl = $this->apiBaseUrl . $this->characterEndpoint . '/' . $characterIdsString;
+        $data = $this->getResponseData($apiUrl);
+
+        return !empty($data) ? $this->serializer->denormalize($data, CharacterDTO::class . '[]') : [];
+    }
+
+    /**
+     * Runs a GET request to the REST API and returns the response data.
      *
      * @throws ApiException
      */
@@ -115,6 +156,29 @@ class ApiService implements ApiServiceInterface
     /**
      * @throws ApiException
      */
+    public function getCharacterById(int $id): ?CharacterDTO
+    {
+        $apiUrl = $this->apiBaseUrl . $this->characterEndpoint . '/' . $id;
+        $data = $this->getResponseData($apiUrl);
+
+        if ($data) {
+            $character = $this->serializer->denormalize($data, CharacterDTO::class);
+
+            // Fetch last location and add dimension to the returned object
+            if (!empty($data['location']['url'])) {
+                $location = $this->getLocationByUrl($data['location']['url']);
+                $character->dimension = $location?->dimension;
+            }
+
+            return $character;
+        }
+
+        return null;
+    }
+
+    /**
+     * @throws ApiException
+     */
     public function getLocationByUrl(string $url): ?LocationDTO
     {
         $data = $this->getResponseData($url);
@@ -129,23 +193,6 @@ class ApiService implements ApiServiceInterface
     public function getCharactersByName(string $name): ?array
     {
         $apiUrl = $this->apiBaseUrl . $this->characterEndpoint . '/?name=' . urlencode($name);
-        $data = $this->getResponseData($apiUrl);
-
-        return !empty($data) ? $this->serializer->denormalize($data, CharacterDTO::class . '[]') : [];
-    }
-
-    /**
-     * @return CharacterDTO[]
-     * @throws ApiException
-     */
-    public function getCharactersByIds(array $ids): array
-    {
-        if (empty($ids)) {
-            return [];
-        }
-
-        $characterIdsString = implode(',', $ids);
-        $apiUrl = $this->apiBaseUrl . $this->characterEndpoint . '/' . $characterIdsString;
         $data = $this->getResponseData($apiUrl);
 
         return !empty($data) ? $this->serializer->denormalize($data, CharacterDTO::class . '[]') : [];

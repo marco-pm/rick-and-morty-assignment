@@ -7,8 +7,6 @@ use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 
 interface CharacterSearchCriteriaFactoryInterface
 {
-    public const CHARACTER_SEARCH_CRITERIA_NAMESPACE = "App\Service\CharacterSearchCriteria\\";
-
     /**
      * @throws ClassNotFoundException
      */

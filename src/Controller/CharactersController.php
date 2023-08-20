@@ -17,7 +17,10 @@ use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 
 class CharactersController extends AbstractController
 {
-    public function __construct(private readonly LoggerInterface $logger)
+    public function __construct(
+        private ApiServiceInterface      $apiService,
+        private readonly LoggerInterface $logger
+    )
     {
     }
 
@@ -50,7 +53,7 @@ class CharactersController extends AbstractController
         }
 
         try {
-            $characters = $searchCriteria->search($searchRequest->searchTerm);
+            $characters = $this->apiService->search($searchCriteria, $searchRequest->searchTerm);
         } catch (ApiException $e) {
             $errorMessage = 'An error occurred. Please try again later.';
             $this->logger->error('An error occurred while searching for characters: ' . $e->getMessage(), [
@@ -74,13 +77,13 @@ class CharactersController extends AbstractController
     }
 
     #[Route('/character/{id<\d+>}', name: 'character', methods: 'GET')]
-    public function showCharacter(int $id, Request $request, ApiServiceInterface $apiService): Response
+    public function showCharacter(int $id, Request $request): Response
     {
         $errorMessage = null;
         $character = null;
 
         try {
-            $character = $apiService->getCharacterById($id);
+            $character = $this->apiService->getCharacterById($id);
         } catch (ApiException $e) {
             $errorMessage = 'An error occurred. Please try again later.';
             $this->logger->error('An error occurred while displaying character details: ' . $e->getMessage(), [
