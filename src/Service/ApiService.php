@@ -7,9 +7,6 @@ use App\DTO\EpisodeDTO;
 use App\DTO\LocationDTO;
 use App\Exception\ApiException;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
-use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
@@ -20,28 +17,16 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class ApiService implements ApiServiceInterface
 {
-    private const CACHE_PATH = __DIR__ . '/../../var/cache/api';
-
-    private const CACHE_TTL = 3600;
-
-    private SerializerInterface $serializer;
-
     public function __construct(
-        private HttpClientInterface $httpClient,
+        private HttpClientInterface $httpClient, // cachingHttpClient defined in services.yaml
+        private SerializerInterface $serializer,
         private readonly string     $apiBaseUrl,
         private readonly string     $characterEndpoint,
         private readonly string     $locationEndpoint,
         private readonly string     $episodeEndpoint,
+
     )
     {
-        $this->serializer = new Serializer([new ArrayDenormalizer(), new ObjectNormalizer()]);
-
-        // TODO: CachingHttpClient defeats concurrency https://github.com/symfony/symfony/issues/36967
-        // so, if we use the CachingHttpClient, the requests will be sequential.
-        // consider a "manual" approach, eg https://developer.happyr.com/http-client-and-caching
-
-        /*$store = new Store(self::CACHE_PATH);
-        $this->httpClient = new CachingHttpClient($this->httpClient, $store, ['default_ttl' => self::CACHE_TTL]);*/
     }
 
     /**

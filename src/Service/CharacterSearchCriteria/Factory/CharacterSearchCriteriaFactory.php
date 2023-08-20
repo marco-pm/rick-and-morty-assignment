@@ -28,5 +28,4 @@ class CharacterSearchCriteriaFactory implements CharacterSearchCriteriaFactoryIn
 
         throw new ClassNotFoundException(sprintf('Character search criteria %s not found', $searchCriteria));
     }
-
 }

@@ -34,9 +34,26 @@ services:
         arguments:
             $characterSearchCriteria: !tagged_iterator app.character_search_criteria
 
+    app.cache_store:
+        class: Symfony\Component\HttpKernel\HttpCache\Store
+        arguments:
+            $root: '%kernel.cache_dir%/http_cache'
+
+    app.caching_http_client:
+        class: Symfony\Component\HttpClient\CachingHttpClient
+        arguments:
+            $client: '@http_client'
+            $store: '@app.cache_store'
+            $defaultOptions: { 'default_ttl': 3600 }
+
     App\Service\ApiService:
         arguments:
+            # TODO: CachingHttpClient defeats concurrency https://github.com/symfony/symfony/issues/36967
+            # so, if we use the CachingHttpClient, the requests will be sequential.
+            # consider a "manual" approach, eg https://developer.happyr.com/http-client-and-caching
+            $httpClient: '@app.caching_http_client'
             $apiBaseUrl: '%env(RICK_AND_MORTY_API_BASE_URL)%'
             $characterEndpoint: 'character'
             $locationEndpoint: 'location'
             $episodeEndpoint: 'episode'
+
