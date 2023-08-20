@@ -13,9 +13,10 @@ The app will be available at http://localhost.
 Mainly due to time constraints:
 - The frontend is _very_ minimalistic and SSR only (no AJAX/SPA)
 - The test suite is just drafted and currently includes only a few tests.
- 
-If I had more time to work on this project, these are the areas where I would focus on making additional improvements:
-- validation and handle exception
-- PHPStan CS Fixer
-- other stuff michael
-- altri improvements notion
+
+Also to do:
+- Make the HTTP Client work with both caching and parallel requests
+- Use GraphQL instead of REST
+- Because the results are paginated in the frontend, there's actually no need to fetch all the characters from the 
+  API at once. I would just need to fetch those shown in the current page.
+- Use PHP-FPM instead of Apache in the Docker image
