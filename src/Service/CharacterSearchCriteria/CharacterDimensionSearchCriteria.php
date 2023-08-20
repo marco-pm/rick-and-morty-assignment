@@ -6,6 +6,6 @@ class CharacterDimensionSearchCriteria implements CharacterSearchCriteriaInterfa
 {
     public function getCriteria(string $searchTerm): string
     {
-        return 'getCharactersByDimension';
+        return 'getLocationsByDimension';
     }
 }
