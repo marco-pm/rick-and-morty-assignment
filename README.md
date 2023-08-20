@@ -15,8 +15,7 @@ Mainly due to time constraints:
 - The test suite is just drafted and currently includes only a few tests.
  
 If I had more time to work on this project, these are the areas where I would focus on making additional improvements:
-- Many more tests
-- Better handling of HTTP client exceptions, retry logic, etc.
-- Better frontend: more features, better design (especially on mobile), responsiveness, etc.
-- More validation (eg query parameters)
-- PHPStan, CS Fixer and other code quality tools
+- validation and handle exception
+- PHPStan CS Fixer
+- other stuff michael
+- altri improvements notion

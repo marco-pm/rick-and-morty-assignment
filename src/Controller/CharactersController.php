@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\DTO\SearchRequestDTO;
 use App\Exception\ApiException;
 use App\Service\ApiServiceInterface;
 use App\Service\CharacterSearchCriteria\Factory\CharacterSearchCriteriaFactoryInterface;
@@ -10,7 +11,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
+use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 
@@ -26,14 +27,9 @@ class CharactersController extends AbstractController
         return $this->render('home.html.twig');
     }
 
-    /**
-     * TODO: Add validation for category and handle ClassNotFoundException
-     * @throws ClassNotFoundException
-     */
     #[Route('/characters', name: 'characters', methods: ['GET'])]
     public function listCharacters(
-        #[MapQueryParameter] string             $category,
-        #[MapQueryParameter] string             $searchTerm,
+        #[MapQueryString] SearchRequestDTO      $searchRequest,
         Request                                 $request,
         CharacterSearchCriteriaFactoryInterface $characterSearchCriteriaFactory,
         PaginatorInterface                      $paginator,
@@ -43,18 +39,25 @@ class CharactersController extends AbstractController
         $characters = [];
         $errorMessage = null;
 
-        if ($searchTerm) {
-            $searchCriteria = $characterSearchCriteriaFactory->create($category);
-            try {
-                $characters = $searchCriteria->search($searchTerm);
-            } catch (ApiException $e) {
-                $errorMessage = 'An error occurred. Please try again later.';
-                $this->logger->error('An error occurred while searching for characters: ' . $e->getMessage(), [
-                    'searchTerm' => $searchTerm,
-                    'category'   => $category,
-                    'exception'  => $e,
-                ]);
-            }
+        try {
+            $searchCriteria = $characterSearchCriteriaFactory->create($searchRequest->category);
+        } catch (ClassNotFoundException $e) {
+            $errorMessage = 'Invalid search filter.';
+            $this->logger->error('Invalid search category: ' . $e->getMessage(), [
+                'category'  => $searchRequest->category,
+                'exception' => $e,
+            ]);
+        }
+
+        try {
+            $characters = $searchCriteria->search($searchRequest->searchTerm);
+        } catch (ApiException $e) {
+            $errorMessage = 'An error occurred. Please try again later.';
+            $this->logger->error('An error occurred while searching for characters: ' . $e->getMessage(), [
+                'searchTerm' => $searchRequest->searchTerm,
+                'category'   => $searchRequest->category,
+                'exception'  => $e,
+            ]);
         }
 
         $paginatedCharacters = $paginator->paginate(
