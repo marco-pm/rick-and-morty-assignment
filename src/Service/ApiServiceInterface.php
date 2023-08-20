@@ -6,9 +6,15 @@ use App\DTO\CharacterDTO;
 use App\DTO\EpisodeDTO;
 use App\DTO\LocationDTO;
 use App\Exception\ApiException;
+use App\Service\CharacterSearchCriteria\CharacterSearchCriteriaInterface;
 
 interface ApiServiceInterface
 {
+    /**
+     * @throws ApiException
+     */
+    public function search(CharacterSearchCriteriaInterface $searchCriteria, string $searchTerm): array;
+
     /**
      * @throws ApiException
      */

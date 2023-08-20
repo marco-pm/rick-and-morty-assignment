@@ -16,15 +16,15 @@ use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-class ApiService implements ApiServiceInterface
+readonly class ApiService implements ApiServiceInterface
 {
     public function __construct(
         private HttpClientInterface $httpClient, // cachingHttpClient defined in services.yaml
         private DtoFactory          $characterDtoFactory,
-        private readonly string     $apiBaseUrl,
-        private readonly string     $characterEndpoint,
-        private readonly string     $locationEndpoint,
-        private readonly string     $episodeEndpoint,
+        private string              $apiBaseUrl,
+        private string              $characterEndpoint,
+        private string              $locationEndpoint,
+        private string              $episodeEndpoint,
     )
     {
     }

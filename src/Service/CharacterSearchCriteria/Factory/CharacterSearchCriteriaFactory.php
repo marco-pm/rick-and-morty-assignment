@@ -9,7 +9,7 @@ use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 class CharacterSearchCriteriaFactory implements CharacterSearchCriteriaFactoryInterface
 {
     public function __construct(
-        private iterable              $characterSearchCriteria,
+        private readonly iterable     $characterSearchCriteria,
         protected ApiServiceInterface $apiService
     )
     {

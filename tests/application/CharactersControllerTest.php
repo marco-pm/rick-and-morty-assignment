@@ -10,8 +10,8 @@ class CharactersControllerTest extends WebTestCase
         $client = static::createClient();
         $crawler = $client->request('GET', '/');
 
-        $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('p', 'Welcome to the Rick and Morty App');
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('p', 'Welcome to the Rick and Morty App');
     }
 
     public function testSearchByCharacterName(): void
@@ -24,7 +24,7 @@ class CharactersControllerTest extends WebTestCase
         $form['searchTerm'] = 'rick';
         $crawler = $client->submit($form);
 
-        $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('h2', '107 characters found');
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('h2', '107 characters found');
     }
 }
