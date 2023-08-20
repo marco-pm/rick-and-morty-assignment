@@ -25,7 +25,6 @@ class ApiService implements ApiServiceInterface
         private readonly string     $characterEndpoint,
         private readonly string     $locationEndpoint,
         private readonly string     $episodeEndpoint,
-
     )
     {
     }
@@ -61,6 +60,7 @@ class ApiService implements ApiServiceInterface
 
     /**
      * @return CharacterDTO[]
+     *
      * @throws ApiException
      */
     protected function getCharactersFromEndpoints(array $characterEndpoints): array
@@ -74,11 +74,13 @@ class ApiService implements ApiServiceInterface
     protected function extractCharacterIdfromUrl(string $characterUrl): int
     {
         $parts = explode('/', $characterUrl);
+
         return (int)end($parts);
     }
 
     /**
      * @return CharacterDTO[]
+     *
      * @throws ApiException
      */
     public function getCharactersByIds(array $ids): array
@@ -108,8 +110,8 @@ class ApiService implements ApiServiceInterface
 
             // deal with error status codes
             $statusCode = $response->getStatusCode(); // prevents HttpException from being thrown
-            if ($statusCode !== Response::HTTP_OK) {
-                if ($statusCode === Response::HTTP_NOT_FOUND) {
+            if (Response::HTTP_OK !== $statusCode) {
+                if (Response::HTTP_NOT_FOUND === $statusCode) {
                     return []; // Return empty array for 404
                 }
                 throw new ApiException('API request failed with status code: ' . $statusCode);
@@ -127,7 +129,7 @@ class ApiService implements ApiServiceInterface
                 $totalPages = $data['info']['pages'];
                 $responses = [];
 
-                for ($i = 2; $i <= $totalPages; $i++) {
+                for ($i = 2; $i <= $totalPages; ++$i) {
                     $uri = $apiUrl . (str_contains($apiUrl, '?') ? '&' : '?') . 'page=' . $i;
                     $responses[] = $this->httpClient->request('GET', $uri);
                 }
@@ -135,7 +137,7 @@ class ApiService implements ApiServiceInterface
                 foreach ($responses as $response) {
                     // deal with error status codes
                     $statusCode = $response->getStatusCode(); // prevents HttpException from being thrown
-                    if ($statusCode !== Response::HTTP_OK && $statusCode !== Response::HTTP_NOT_FOUND) {
+                    if (Response::HTTP_OK !== $statusCode && Response::HTTP_NOT_FOUND !== $statusCode) {
                         throw new ApiException('API request failed with status code: ' . $statusCode);
                     }
 
@@ -187,6 +189,7 @@ class ApiService implements ApiServiceInterface
 
     /**
      * @return CharacterDTO[]|null
+     *
      * @throws ApiException
      */
     public function getCharactersByName(string $name): ?array
@@ -199,6 +202,7 @@ class ApiService implements ApiServiceInterface
 
     /**
      * @return LocationDTO[]
+     *
      * @throws ApiException
      */
     public function getLocationsByName(string $name): array
@@ -211,6 +215,7 @@ class ApiService implements ApiServiceInterface
 
     /**
      * @return LocationDTO[]
+     *
      * @throws ApiException
      */
     public function getLocationsByDimension(string $dimension): array
@@ -223,6 +228,7 @@ class ApiService implements ApiServiceInterface
 
     /**
      * @return EpisodeDTO[]|null
+     *
      * @throws ApiException
      */
     public function getEpisodesByName(string $name): ?array
@@ -235,6 +241,7 @@ class ApiService implements ApiServiceInterface
 
     /**
      * @return EpisodeDTO[]|null
+     *
      * @throws ApiException
      */
     public function getEpisodesByCode(string $code): ?array

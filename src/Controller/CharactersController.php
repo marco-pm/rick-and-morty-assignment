@@ -18,8 +18,8 @@ use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 class CharactersController extends AbstractController
 {
     public function __construct(
-        private ApiServiceInterface      $apiService,
-        private readonly LoggerInterface $logger
+        private readonly ApiServiceInterface $apiService,
+        private readonly LoggerInterface     $logger
     )
     {
     }
@@ -41,6 +41,7 @@ class CharactersController extends AbstractController
     {
         $characters = [];
         $errorMessage = null;
+        $searchCriteria = null;
 
         try {
             $searchCriteria = $characterSearchCriteriaFactory->create($searchRequest->category);

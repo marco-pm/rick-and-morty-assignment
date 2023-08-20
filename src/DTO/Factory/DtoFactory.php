@@ -7,7 +7,7 @@ use App\DTO\EpisodeDTO;
 use App\DTO\LocationDTO;
 use Symfony\Component\Serializer\SerializerInterface;
 
-class DtoFactory implements DtoFactoryInterface
+readonly class DtoFactory implements DtoFactoryInterface
 {
     public function __construct(private SerializerInterface $serializer)
     {
@@ -27,5 +27,4 @@ class DtoFactory implements DtoFactoryInterface
     {
         return $this->serializer->denormalize($data, LocationDTO::class);
     }
-
 }
