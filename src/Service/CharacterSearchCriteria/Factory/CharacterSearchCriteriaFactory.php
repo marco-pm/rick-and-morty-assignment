@@ -9,26 +9,24 @@ use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 class CharacterSearchCriteriaFactory implements CharacterSearchCriteriaFactoryInterface
 {
     public function __construct(
+        private iterable              $characterSearchCriteria,
         protected ApiServiceInterface $apiService
     )
     {
     }
 
-    /**
-     * @throws ClassNotFoundException
-     */
     public function create(string $searchCriteria): CharacterSearchCriteriaInterface
     {
         $searchCriteriaUc = str_replace(' ', '', ucwords(str_replace('-', ' ', $searchCriteria)));
-
         $characterSearchCriteriaClassBasename = 'Character' . $searchCriteriaUc . 'SearchCriteria';
 
-        $characterSearchCriteria = self::CHARACTER_SEARCH_CRITERIA_NAMESPACE . $characterSearchCriteriaClassBasename;
-
-        if (!class_exists($characterSearchCriteria)) {
-            throw new ClassNotFoundException($characterSearchCriteria);
+        foreach ($this->characterSearchCriteria as $characterSearchCriteria) {
+            if (str_ends_with(get_class($characterSearchCriteria), $characterSearchCriteriaClassBasename)) {
+                return $characterSearchCriteria;
+            }
         }
 
-        return new $characterSearchCriteria($this->apiService);
+        throw new ClassNotFoundException(sprintf('Character search criteria %s not found', $searchCriteria));
     }
+
 }
