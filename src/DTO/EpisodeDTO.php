@@ -4,16 +4,16 @@ namespace App\DTO;
 
 use DateTimeImmutable;
 
-class EpisodeDTO
+readonly class EpisodeDTO
 {
     public function __construct(
-        public readonly int               $id,
-        public readonly string            $name,
-        public readonly string            $air_date,
-        public readonly string            $episode,
-        public readonly array             $characters,
-        public readonly string            $url,
-        public readonly DateTimeImmutable $created,
+        public int               $id,
+        public string            $name,
+        public string            $air_date,
+        public string            $episode,
+        public array             $characters,
+        public string            $url,
+        public DateTimeImmutable $created,
     )
     {
     }

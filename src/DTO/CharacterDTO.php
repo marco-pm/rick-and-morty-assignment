@@ -4,22 +4,22 @@ namespace App\DTO;
 
 use DateTimeImmutable;
 
-class CharacterDTO
+readonly class CharacterDTO
 {
     public function __construct(
-        public readonly int               $id,
-        public readonly string            $name,
-        public readonly string            $status,
-        public readonly string            $species,
-        public readonly ?string           $type,
-        public readonly string            $gender,
-        public readonly array             $origin,
-        public readonly array             $location,
-        public readonly string            $image,
-        public readonly array             $episode,
-        public readonly string            $url,
-        public readonly DateTimeImmutable $created,
-        public ?string                    $dimension = null,
+        public int               $id,
+        public string            $name,
+        public string            $status,
+        public string            $species,
+        public ?string           $type,
+        public string            $gender,
+        public array             $origin,
+        public array             $location,
+        public string            $image,
+        public array             $episode,
+        public string            $url,
+        public DateTimeImmutable $created,
+        public ?string           $dimension = null,
     )
     {
     }

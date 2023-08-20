@@ -4,11 +4,11 @@ namespace App\Service;
 
 use App\DTO\CharacterDTO;
 use App\DTO\EpisodeDTO;
+use App\DTO\Factory\DtoFactory;
 use App\DTO\LocationDTO;
 use App\Exception\ApiException;
 use App\Service\CharacterSearchCriteria\CharacterSearchCriteriaInterface;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
@@ -20,7 +20,7 @@ class ApiService implements ApiServiceInterface
 {
     public function __construct(
         private HttpClientInterface $httpClient, // cachingHttpClient defined in services.yaml
-        private SerializerInterface $serializer,
+        private DtoFactory          $characterDtoFactory,
         private readonly string     $apiBaseUrl,
         private readonly string     $characterEndpoint,
         private readonly string     $locationEndpoint,
@@ -91,7 +91,7 @@ class ApiService implements ApiServiceInterface
         $apiUrl = $this->apiBaseUrl . $this->characterEndpoint . '/' . $characterIdsString;
         $data = $this->getResponseData($apiUrl);
 
-        return !empty($data) ? $this->serializer->denormalize($data, CharacterDTO::class . '[]') : [];
+        return !empty($data) ? array_map([$this->characterDtoFactory, 'createCharacter'], $data) : [];
     }
 
     /**
@@ -162,15 +162,14 @@ class ApiService implements ApiServiceInterface
         $data = $this->getResponseData($apiUrl);
 
         if ($data) {
-            $character = $this->serializer->denormalize($data, CharacterDTO::class);
-
-            // Fetch last location and add dimension to the returned object
             if (!empty($data['location']['url'])) {
                 $location = $this->getLocationByUrl($data['location']['url']);
-                $character->dimension = $location?->dimension;
+                if ($location) {
+                    $data['dimension'] = $location->dimension ?? null;
+                }
             }
 
-            return $character;
+            return $this->characterDtoFactory->createCharacter($data);
         }
 
         return null;
@@ -183,7 +182,7 @@ class ApiService implements ApiServiceInterface
     {
         $data = $this->getResponseData($url);
 
-        return !empty($data) ? $this->serializer->denormalize($data, LocationDTO::class) : null;
+        return !empty($data) ? $this->characterDtoFactory->createLocation($data) : null;
     }
 
     /**
@@ -195,7 +194,7 @@ class ApiService implements ApiServiceInterface
         $apiUrl = $this->apiBaseUrl . $this->characterEndpoint . '/?name=' . urlencode($name);
         $data = $this->getResponseData($apiUrl);
 
-        return !empty($data) ? $this->serializer->denormalize($data, CharacterDTO::class . '[]') : [];
+        return !empty($data) ? array_map([$this->characterDtoFactory, 'createCharacter'], $data) : [];
     }
 
     /**
@@ -207,7 +206,7 @@ class ApiService implements ApiServiceInterface
         $apiUrl = $this->apiBaseUrl . $this->locationEndpoint . '/?name=' . urlencode($name);
         $data = $this->getResponseData($apiUrl);
 
-        return !empty($data) ? $this->serializer->denormalize($data, LocationDTO::class . '[]') : [];
+        return !empty($data) ? array_map([$this->characterDtoFactory, 'createLocation'], $data) : [];
     }
 
     /**
@@ -219,7 +218,7 @@ class ApiService implements ApiServiceInterface
         $apiUrl = $this->apiBaseUrl . $this->locationEndpoint . '/?dimension=' . urlencode($dimension);
         $data = $this->getResponseData($apiUrl);
 
-        return !empty($data) ? $this->serializer->denormalize($data, LocationDTO::class . '[]') : [];
+        return !empty($data) ? array_map([$this->characterDtoFactory, 'createLocation'], $data) : [];
     }
 
     /**
@@ -231,7 +230,7 @@ class ApiService implements ApiServiceInterface
         $apiUrl = $this->apiBaseUrl . $this->episodeEndpoint . '/?name=' . urlencode($name);
         $data = $this->getResponseData($apiUrl);
 
-        return !empty($data) ? $this->serializer->denormalize($data, EpisodeDTO::class . '[]') : [];
+        return !empty($data) ? array_map([$this->characterDtoFactory, 'createEpisode'], $data) : [];
     }
 
     /**
@@ -243,6 +242,6 @@ class ApiService implements ApiServiceInterface
         $apiUrl = $this->apiBaseUrl . $this->episodeEndpoint . '/?episode=' . urlencode($code);
         $data = $this->getResponseData($apiUrl);
 
-        return !empty($data) ? $this->serializer->denormalize($data, EpisodeDTO::class . '[]') : [];
+        return !empty($data) ? array_map([$this->characterDtoFactory, 'createEpisode'], $data) : [];
     }
 }
